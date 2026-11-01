@@ -14,8 +14,8 @@ client = SarvamAI(api_subscription_key=os.environ.get("SARVAM_API_KEY"))
 SYSTEM_PROMPT = """You are an AI assistant structuring student grievances for the IIT Bombay campus platform.
 Given a student complaint (which may be spoken in Telugu, Hindi, Marathi, Hinglish, or English), analyze and return strictly a valid JSON object with the following fields:
 
-- title: short, clean English title (max 10 words). Never include names of individual students or staff.
-- summary: 1-2 neutral, factual sentences in English with anger and insults removed. Never include names of individual students or staff.
+- title: short, clean English title (max 10 words). MUST ALWAYS BE 100% IN ENGLISH. Never include names of individual students or staff.
+- summary: 1-2 neutral, factual sentences. MUST ALWAYS BE 100% IN ENGLISH with anger and insults removed. Never include names of individual students or staff.
 - scope: one of ["hostel", "mess", "academic_department", "course", "batch", "club_or_committee", "institute", "other"].
   If the complaint mentions a specific hostel, department, course, or club, use that scope.
   If many places are affected or institute facilities like main wifi/hospital/library are mentioned, use "institute".
@@ -42,11 +42,14 @@ Given a student complaint (which may be spoken in Telugu, Hindi, Marathi, Hingli
 - urgency: one of ["low", "medium", "high", "critical"] (critical only for safety, health, harassment, or no water/electricity).
 - sensitive: boolean (true for harassment, ragging, discrimination, mental health, or safety complaints; false otherwise).
 - detected_language: main language of the complaint (e.g., "Telugu", "Hindi", "Hinglish", "Marathi", "English").
-- keywords: array of 3-5 tags.
+- keywords: array of 3-5 tags in English.
 
-Rules:
-- Never include names of individual students or staff in the title or summary.
-- Return ONLY a valid JSON object. No markdown ticks, no preamble."""
+MANDATORY TRANSLATION & LANGUAGE RULES:
+1. "title" and "summary" MUST ALWAYS BE WRITTEN IN CLEAR, PROFESSIONAL ENGLISH, regardless of the input language.
+2. Even if the complaint is in Telugu, Hindi, Marathi, or mixed Hinglish, ALWAYS TRANSLATE the problem into English for the title and summary.
+3. NEVER return non-English scripts (like Telugu, Devanagari) or transliterated vernacular words in "title" or "summary".
+4. Never include names of individual students or staff in the title or summary.
+5. Return ONLY a valid JSON object. No markdown ticks, no preamble."""
 
 def clean_json_text(text: Optional[str]) -> str:
     if not text:
@@ -88,10 +91,10 @@ def structure_complaint(text: str, student_profile: Optional[Dict[str, Any]] = N
             if attempt == 1:
                 print(f"[Sarvam Error] Failed to structure complaint: {e}")
                 # Fallback structure if API fails
-    # If retries did not yield a valid title, return safe structured fallback
+    # If retries did not yield a valid title, return safe English structured fallback
     return {
-        "title": text[:60] + "..." if len(text) > 60 else text,
-        "summary": text,
+        "title": "Campus Facility Grievance",
+        "summary": "A student reported a campus facility grievance requiring administrative inspection and resolution.",
         "scope": "other",
         "scope_name": student_profile.get("hostel") if student_profile else None,
         "category": "Other",
@@ -100,7 +103,7 @@ def structure_complaint(text: str, student_profile: Optional[Dict[str, Any]] = N
         "urgency": "medium",
         "sensitive": False,
         "detected_language": "Unknown",
-        "keywords": ["grievance", "campus"]
+        "keywords": ["grievance", "campus", "maintenance"]
     }
 
 def transcribe_audio_file(audio_path: str) -> Dict[str, Any]:
