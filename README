@@ -1,0 +1,17 @@
+A campus grievance platform with voice input. Students record a complaint in their own language (Hindi/Marathi/English/Telugu mix). Saaras transcribes it, sarvam-105b turns it into a structured post, and it appears on a public feed where others can upvote and an admin can update status. Bulbul reads back a confirmation. Python with Flask for the website.
+
+The structured JSON from sarvam-105b must contain these fields:
+
+title: a short, clean English title (max 10 words)
+summary: 1-2 neutral, factual sentences, with anger and insults removed
+category: one of Hostel, Mess/Food, Academics, Wifi/IT, Infrastructure/Maintenance, Library, Transport, Sports/Gym, Health/Medical, Safety/Security, Administration/Fees, Placement/Career, Other
+department: one of Hostel Warden Office, Mess Committee, Dean of Academic Affairs, Head of Department, IT/Network Cell, Estate/Maintenance Office, Central Library, Transport Office, Sports Council, Health Centre, Security Office, Student Affairs Dean, Accounts/Fees Office, Training & Placement Cell, Anti-Ragging Committee, Internal Complaints Committee, Student Counselling Cell
+location: hostel, block, room, or building if mentioned, otherwise null
+urgency: low, medium, high, or critical (critical only for safety, health, harassment, or no water/electricity)
+sensitive: true for harassment, ragging, discrimination, mental health, or safety complaints. Sensitive complaints must go to a private admin queue and never appear on the public feed, and must be routed to Anti-Ragging Committee, Internal Complaints Committee, Student Counselling Cell, or Security Office as appropriate.
+detected_language: the main language of the complaint
+keywords: 3-5 tags
+
+Rules: never include names of individual students or staff in the public title or summary. Keep the raw transcript private. Posts have a status that an admin can change: Open, Seen, In Progress, Resolved, Rejected. The feed shows upvotes (“me too”), status badge, category, and urgency, sorted by upvotes. Add an anonymous toggle on the submit form.
+
+Start with only the first step: one script that sends a sample mixed-language complaint (for example “Hostel B ka geyser teen din se kharab hai, bahut thanda paani aata hai”) to sarvam-105b and prints the JSON above. After that works, build the Flask app step by step.

@@ -1,0 +1,53 @@
+A campus grievance platform with voice input, built for IIT Bombay students. Students record a complaint in their own language (Hindi/Marathi/English/Telugu mix). Saaras transcribes it (code-mixed speech), sarvam-105b turns it into a structured post, and it appears on a public feed where others can upvote (“me too”) and an admin can update status. Bulbul reads back a confirmation in the student’s language. Python with Flask for the website. Read the API key from the SARVAM_API_KEY environment variable; never hardcode or print it.
+
+Structured JSON from sarvam-105b (return only JSON):
+
+title: short, clean English title (max 10 words)
+summary: 1-2 neutral, factual sentences with anger and insults removed
+scope: who is affected, one of “hostel”, “mess”, “academic_department”, “course”, “batch”, “club_or_committee”, “institute”, “other”
+scope_name: the specific hostel, mess, department, course, batch, club, or committee (for example “Hostel 5”, “Computer Science”, “CS101”, “2025 batch”, “WnCC”), or null if institute-wide
+category: one of Hostel, Mess/Food, Academics, Wifi/IT, Infrastructure/Maintenance, Library, Transport, Sports/Gym, Health/Medical, Safety/Security, Administration/Fees, Placement/Career, Clubs/Events, Other
+department: the office that should handle it, one of Hostel Warden Office, Mess Committee, Dean of Academic Affairs, Head of Department, Course Instructor/Coordinator, IT/Network Cell, Estate/Maintenance Office, Central Library, Transport Office, Institute Sports Council, Institute Cultural Council, Institute Technical Council, Hostel Affairs Council, Institute Hospital, DoSA (Dean of Student Affairs), Accounts/Fees Office, Training & Placement Cell, Anti-Ragging Committee, Internal Complaints Committee, Student Wellness Centre, Security Office
+location: block, wing, room, lab, or building if mentioned, otherwise null
+urgency: low, medium, high, or critical (critical only for safety, health, harassment, or no water/electricity)
+sensitive: true for harassment, ragging, discrimination, mental health, or safety complaints. Sensitive complaints go to a private admin queue and never appear on the public feed. Route them to Anti-Ragging Committee, Internal Complaints Committee, Student Wellness Centre, or Security Office as appropriate.
+detected_language: main language of the complaint
+keywords: 3-5 tags
+
+Campus reference data (use these names when matching complaints; if nothing matches, use “Other” rather than inventing a name; these are placeholders to be confirmed by a student at the campus):
+
+Student bodies: Student Gymkhana, Institute Technical Council (ITC), Institute Cultural Council (ICC), Institute Sports Council, Hostel Affairs Council, Academic Council, Hostel Councils (each hostel has its own General Secretary)
+Clubs: Web and Coding Club (WnCC) and other ITC clubs and teams
+Events: Techfest, Mood Indigo, inter-hostel General Championships (GC: technical, sports, cultural), Inter-IIT
+Hostels: Hostel 1 to Hostel 18 (edit to real hostel names)
+Offices: DoSA, Institute Hospital, Student Wellness Centre, Institute Library, Hostel Warden Offices
+Departments: use the student’s department from the submit form
+Complaints about fests or GC events go to the relevant council, not to a hostel warden.
+
+Scope rules:
+
+If the complaint names a specific place or group, use that scope and fill scope_name.
+If scope is unclear, fall back to the student’s profile (hostel, department, batch from the submit form).
+If many places are affected, use “institute”.
+Routing: hostel problems go to that hostel’s warden, department and course problems go to the department head or course instructor, mess problems go to that mess’s committee, club or fest problems go to the matching council, and institute-wide problems go to the relevant central office.
+
+Website:
+
+Feed tabs: “My Hostel”, “My Department”, “My Batch”, “Clubs & Events”, and “Institute-wide”. Each shows posts matching the student’s profile.
+Submit form: voice record button, hostel (or Day scholar), department, batch year, and an anonymous toggle.
+Each post shows title, summary, category, urgency badge, status badge, scope, and upvote count. Filters by category, urgency, and status. Sort by upvotes.
+Statuses an admin can set: Open, Seen, In Progress, Resolved, Rejected.
+Roles via a simple dropdown (Student / Warden / Dept Head / Admin), with no real login. A warden sees only their hostel, a dept head sees only their department, and an admin sees everything with counts by scope and category plus the private sensitive queue.
+Rules: never include names of individual students or staff in the public title or summary. Keep the raw transcript private. Anonymous posts store no name.
+
+Build order (do only step 1 first, then wait for me):
+
+One script that sends these four sample mixed-language complaints to sarvam-105b and prints the JSON for each:
+“Hostel B ka geyser teen din se kharab hai, bahut thanda paani aata hai”
+“CS department ki lab mein computers kaam nahi kar rahe, practical nahi ho pa raha”
+“Campus mein wifi bahut slow hai, library mein bhi kaam nahi kar raha”
+“WnCC ka meeting room book nahi ho raha, koi reply nahi de raha”
+Saaras speech to text with a sample audio file.
+Flask app with feed, upvotes, and status updates.
+Bulbul confirmation audio.
+Anonymous mode, sensitive queue, and duplicate merging (“14 students affected”).
