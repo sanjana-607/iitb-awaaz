@@ -244,25 +244,82 @@ function renderSubmissionResult(data) {
   resultCard.scrollIntoView({ behavior: 'smooth' });
 }
 
+function resetRecording() {
+  recordedAudioBlob = null;
+  audioChunks = [];
+  const preview = document.getElementById("audio-preview");
+  if (preview) preview.src = "";
+  const container = document.getElementById("audio-preview-container");
+  if (container) container.classList.add("hidden");
+
+  const micWrapper = document.getElementById("mic-icon-wrapper");
+  if (micWrapper) {
+    micWrapper.className = "w-20 h-20 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-3xl shadow-inner transition-all";
+  }
+
+  const statusEl = document.getElementById("recording-status");
+  if (statusEl) statusEl.textContent = "Click below to start recording";
+
+  const timerEl = document.getElementById("recording-timer");
+  if (timerEl) timerEl.textContent = "00:00";
+}
+
 // ==========================================
-// UPVOTE ("ME TOO") AJAX HANDLER
+// UPVOTE ("ME TOO") AJAX HANDLER WITH LOCALSTORAGE
 // ==========================================
 
+function getUpvotedPosts() {
+  try {
+    return JSON.parse(localStorage.getItem("iitb_upvoted_posts") || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function initUpvoteStates() {
+  const upvoted = getUpvotedPosts();
+  upvoted.forEach(id => {
+    const btn = document.getElementById(`upvote-btn-${id}`);
+    if (btn) {
+      btn.classList.add("bg-blue-100", "text-blue-800", "border-blue-400");
+      const label = btn.querySelector(".upvote-label");
+      if (label) label.textContent = "Voted";
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", initUpvoteStates);
+
 async function upvotePost(postId) {
+  const upvoted = getUpvotedPosts();
+  if (upvoted.includes(postId)) {
+    showToast("You have already upvoted this grievance.");
+    return;
+  }
+
   try {
     const btn = document.getElementById(`upvote-btn-${postId}`);
     const voteSpan = document.getElementById(`vote-count-${postId}`);
     const affectedSpan = document.getElementById(`affected-count-${postId}`);
 
-    btn.disabled = true;
+    if (btn) btn.disabled = true;
 
     const res = await fetch(`/api/upvote/${postId}`, { method: "POST" });
     const data = await res.json();
 
     if (data.success) {
-      voteSpan.textContent = data.upvotes;
+      if (voteSpan) voteSpan.textContent = data.upvotes;
       if (affectedSpan) affectedSpan.textContent = data.affected_count;
-      btn.classList.add("bg-blue-100", "text-blue-800", "border-blue-400");
+
+      if (btn) {
+        btn.classList.add("bg-blue-100", "text-blue-800", "border-blue-400");
+        const label = btn.querySelector(".upvote-label");
+        if (label) label.textContent = "Voted";
+      }
+
+      upvoted.push(postId);
+      localStorage.setItem("iitb_upvoted_posts", JSON.stringify(upvoted));
+      showToast("Upvoted! Added to affected count.");
     }
   } catch (err) {
     console.error("Upvote failed:", err);
@@ -282,8 +339,9 @@ async function updatePostStatus(postId, newStatus) {
     });
     const data = await res.json();
     if (data.success) {
-      // Visual feedback
-      console.log(`Updated post #${postId} to ${newStatus}`);
+      showToast(`Status updated to "${newStatus}"`);
+    } else {
+      alert("Error: " + data.error);
     }
   } catch (err) {
     console.error("Failed to update status:", err);
@@ -291,8 +349,63 @@ async function updatePostStatus(postId, newStatus) {
   }
 }
 
-// Audio player helper
-function playAudio(url) {
+// ==========================================
+// AUDIO PLAYBACK & TOAST NOTIFICATION HELPERS
+// ==========================================
+
+let currentAudio = null;
+let currentPlayBtn = null;
+
+function playAudio(url, btnElement) {
+  if (currentAudio) {
+    currentAudio.pause();
+    if (currentPlayBtn) {
+      currentPlayBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i><span>Play Bulbul Audio</span>';
+    }
+  }
+
+  if (currentAudio && currentAudio.src.endsWith(url) && !currentAudio.paused) {
+    currentAudio = null;
+    return;
+  }
+
   const audio = new Audio(url);
-  audio.play().catch(err => console.error("Playback failed:", err));
+  currentAudio = audio;
+  currentPlayBtn = btnElement;
+
+  if (btnElement) {
+    btnElement.innerHTML = '<i class="fa-solid fa-circle-pause text-amber-600 animate-pulse"></i><span>Playing...</span>';
+  }
+
+  audio.play().catch(err => {
+    console.error("Playback failed:", err);
+    if (btnElement) {
+      btnElement.innerHTML = '<i class="fa-solid fa-volume-high"></i><span>Play Bulbul Audio</span>';
+    }
+  });
+
+  audio.onended = () => {
+    if (btnElement) {
+      btnElement.innerHTML = '<i class="fa-solid fa-volume-high"></i><span>Play Bulbul Audio</span>';
+    }
+    currentAudio = null;
+  };
+}
+
+function showToast(message) {
+  let toast = document.getElementById("toast-notification");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "toast-notification";
+    toast.className = "fixed bottom-5 right-5 bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xl flex items-center space-x-2 z-50 transition-all duration-300 opacity-0 transform translate-y-2";
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1.5"></i>${message}`;
+  toast.classList.remove("opacity-0", "translate-y-2");
+  toast.classList.add("opacity-100", "translate-y-0");
+
+  setTimeout(() => {
+    toast.classList.remove("opacity-100", "translate-y-0");
+    toast.classList.add("opacity-0", "translate-y-2");
+  }, 2500);
 }

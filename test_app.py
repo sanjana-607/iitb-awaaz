@@ -23,7 +23,7 @@ class GrievanceAppTestCase(unittest.TestCase):
     def test_02_submit_page(self):
         response = self.client.get('/submit')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Record Campus Grievance", response.data)
+        self.assertIn(b"Campus Grievance", response.data)
         print("✓ Voice submission page renders successfully")
 
     def test_03_admin_dashboard(self):

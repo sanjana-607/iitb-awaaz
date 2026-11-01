@@ -246,7 +246,7 @@
         <div class="flex items-center space-x-3">
           <button onclick="upvotePost({{ post.id }})" id="upvote-btn-{{ post.id }}" class="flex items-center space-x-2 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 hover:border-blue-300 font-semibold px-3 py-1.5 rounded-lg text-xs transition">
             <i class="fa-solid fa-thumbs-up text-blue-600"></i>
-            <span>Me Too</span>
+            <span class="upvote-label">Me Too</span>
             <span id="vote-count-{{ post.id }}" class="bg-white px-1.5 py-0.2 rounded font-bold text-slate-900 border border-slate-200">{{ post.upvotes }}</span>
           </button>
 
@@ -260,7 +260,7 @@
         <!-- Voice Confirmation Playback (if generated) -->
         {% if post.audio_confirmation_path %}
         <div class="flex items-center space-x-1.5">
-          <button onclick="playAudio('{{ post.audio_confirmation_path }}')" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center space-x-1 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-md transition">
+          <button onclick="playAudio('{{ post.audio_confirmation_path }}', this)" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center space-x-1 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-md transition">
             <i class="fa-solid fa-volume-high"></i>
             <span>Play Bulbul Audio</span>
           </button>

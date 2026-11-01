@@ -178,13 +178,13 @@ def get_feed_posts(
 
     # Tab matching
     if tab == "my_hostel" and student_profile and student_profile.get("hostel"):
-        query += " AND scope = 'hostel' AND (scope_name = ? OR student_hostel = ?)"
+        query += " AND scope = 'hostel' AND (LOWER(scope_name) = LOWER(?) OR LOWER(student_hostel) = LOWER(?))"
         params.extend([student_profile["hostel"], student_profile["hostel"]])
     elif tab == "my_department" and student_profile and student_profile.get("department"):
-        query += " AND scope = 'academic_department' AND (scope_name = ? OR student_department = ?)"
+        query += " AND scope = 'academic_department' AND (LOWER(scope_name) = LOWER(?) OR LOWER(student_department) = LOWER(?))"
         params.extend([student_profile["department"], student_profile["department"]])
     elif tab == "my_batch" and student_profile and student_profile.get("batch"):
-        query += " AND scope = 'batch' AND (scope_name = ? OR student_batch = ?)"
+        query += " AND scope = 'batch' AND (LOWER(scope_name) = LOWER(?) OR LOWER(student_batch) = LOWER(?))"
         params.extend([student_profile["batch"], student_profile["batch"]])
     elif tab == "clubs_events":
         query += " AND (scope = 'club_or_committee' OR category = 'Clubs/Events')"
@@ -232,13 +232,13 @@ def get_role_scoped_posts(role: str, role_target: Optional[str] = None) -> List[
     if role == "Warden":
         cursor.execute("""
             SELECT * FROM grievances 
-            WHERE scope = 'hostel' AND (scope_name = ? OR student_hostel = ?)
+            WHERE sensitive = 0 AND scope = 'hostel' AND (LOWER(scope_name) = LOWER(?) OR LOWER(student_hostel) = LOWER(?))
             ORDER BY created_at DESC
         """, (role_target, role_target))
     elif role == "Dept Head":
         cursor.execute("""
             SELECT * FROM grievances 
-            WHERE scope = 'academic_department' AND (scope_name = ? OR student_department = ?)
+            WHERE sensitive = 0 AND scope = 'academic_department' AND (LOWER(scope_name) = LOWER(?) OR LOWER(student_department) = LOWER(?))
             ORDER BY created_at DESC
         """, (role_target, role_target))
     elif role == "Admin":
